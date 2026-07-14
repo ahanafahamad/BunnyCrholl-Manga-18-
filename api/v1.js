@@ -11,6 +11,8 @@ router.get("/home-items", async (req, res) => {
   const { data } = await axios.get(url, {
     headers: {
       "User-Agent": _userAgent,
+       "Accept": "text/html,application/xhtml+xml",
+        "Referer": "https://erisscans.com/",
     },
   });
 
@@ -222,6 +224,8 @@ router.get("/series/:slug", async (req, res) => {
   const { data } = await axios.get(url, {
     headers: {
       "User-Agent": _userAgent,
+       "Accept": "text/html,application/xhtml+xml",
+        "Referer": "https://erisscans.com/",
     },
   });
 
@@ -322,6 +326,8 @@ router.get("/chapter/:slug", async (req, res) => {
   const { data } = await axios.get(url, {
     headers: {
       "User-Agent": _userAgent,
+       "Accept": "text/html,application/xhtml+xml",
+        "Referer": "https://erisscans.com/",
     },
   });
 
