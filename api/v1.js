@@ -390,5 +390,7 @@ res.json({
   }]
 })
 });
-
+router.get("/res", (req, res)=>{
+  res.send("HSLKDUIGJRIJKKKKKKSOJKJIHHFGG")
+})
 export default router;
