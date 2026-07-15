@@ -446,7 +446,113 @@ app.get("/chapter/:slug", async (req, res) => {
     res.status(500).send(`<h1>Error</h1><p>${error.message}</p>`);
   }
 });
+import cloudscraper from "cloudscraper";
+import cheerio from "cheerio";
 
+app.get("/api/v1/search", async (req, res) => {
+  try {
+    const query = req.query.q || "";
+    if (!query.trim()) {
+      return res.json({ response: true, count: 0, data: [] });
+    }
+
+    const searchUrl = `https://erisscans.com/search_series?q=${encodeURIComponent(query)}`;
+    
+    // Use cloudscraper to bypass Cloudflare
+    const html = await cloudscraper.get(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Referer": "https://erisscans.com/"
+      }
+    });
+
+    const $ = cheerio.load(html);
+    const results = [];
+
+    // Try parsing as HTML links (most reliable)
+    $("a[href^='/series/']").each((i, el) => {
+      const $el = $(el);
+      const href = $el.attr("href");
+      const title = $el.text().trim() || $el.attr("title") || "";
+      if (!title || title.length < 2) return;
+
+      // Try to get type/status/genres from parent container
+      const parent = $el.closest("div, li");
+      let type = "manhwa";
+      let status = "ongoing";
+      let genres = [];
+
+      // Look for genre links inside parent
+      parent.find("a[href^='/series/?genre=']").each((j, g) => {
+        genres.push($(g).text().trim().replace(/,$/, ""));
+      });
+
+      // Look for status/type badges if any
+      const badgeText = parent.text().match(/(ongoing|completed|dropped|hiatus)/i);
+      if (badgeText) status = badgeText[0].toLowerCase();
+
+      // If no genres found, try to extract from a tag with class or from text
+      if (genres.length === 0) {
+        const genreText = parent.text().match(/(Adult|Josei|Comedy|Drama|Romance|Fantasy|Action|Ecchi|Harem|Smut|Mature|Slice of life|School life|Supernatural|Horror|Mystery|Psychological|Tragedy|Sports|Sci-fi|Isekai|Historical|Webtoon|Yuri|GL|Shoujo|Seinen)/g);
+        if (genreText) genres = genreText.map(g => g.trim());
+      }
+
+      results.push({
+        title,
+        slug: href,
+        type,
+        status,
+        genres: genres.length ? genres : ["Unknown"],
+        poster: null
+      });
+    });
+
+    // Fallback: if no anchor tags, try text parsing (plain format)
+    if (results.length === 0) {
+      const lines = html.split("\n").filter(line => line.trim());
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        const match = trimmed.match(/^(New\s+)?(manhwa|manhua|manga|comic|novel)?\s*(completed|ongoing|dropped|hiatus)?\s*(.+?)\s*(Adult|Josei|Comedy|Drama|Romance|Fantasy|Action|Ecchi|Harem|Smut|Mature|Slice of life|School life|Supernatural|Horror|Mystery|Psychological|Tragedy|Sports|Sci-fi|Isekai|Historical|Webtoon|Yuri|GL|Shoujo|Seinen)(.*)$/i);
+        if (match) {
+          const title = match[4]?.trim() || "";
+          if (!title) continue;
+          const genreStr = (match[5] || "").trim();
+          const genres = genreStr.split(",").map(g => g.trim()).filter(Boolean);
+
+          const slug = title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
+
+          results.push({
+            title,
+            slug: `/series/${slug}/`,
+            type: match[2] || "manhwa",
+            status: match[3] || "ongoing",
+            genres: genres.length ? genres : ["Unknown"],
+            poster: null
+          });
+        }
+      }
+    }
+
+    // Filter by query (already done by the search endpoint, but extra safety)
+    const filtered = results.filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
+
+    res.json({
+      response: true,
+      count: filtered.length,
+      data: filtered.slice(0, 50)
+    });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 app.listen(9090, () => {
   console.log("Server running at http://localhost:9090");
 });
