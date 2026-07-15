@@ -1,7 +1,22 @@
 import * as cheerio from "cheerio";
 import express from "express";
 import axios from "axios";
-
+import UserAgent from 'user-agents';
+const userAgent = new UserAgent().toString();
+const headers = {
+  'User-Agent': userAgent,
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.5',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
+  'Cache-Control': 'max-age=0',
+  'Referer': 'https://erisscans.com/',
+};
 const router = express.Router();
 const _userAgent =
   "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36";
@@ -10,9 +25,7 @@ const url = "https://erisscans.com/";
 router.get("/home-items", async (req, res) => {
   const { data } = await axios.get(url, {
     headers: {
-      "User-Agent": _userAgent,
-       "Accept": "text/html,application/xhtml+xml",
-        "Referer": "https://erisscans.com/",
+      headers,
     },
   });
 
@@ -223,9 +236,7 @@ router.get("/series/:slug", async (req, res) => {
   const url = `https://erisscans.com/series/${slug}/`;
   const { data } = await axios.get(url, {
     headers: {
-      "User-Agent": _userAgent,
-       "Accept": "text/html,application/xhtml+xml",
-        "Referer": "https://erisscans.com/",
+      headers,
     },
   });
 
@@ -325,9 +336,7 @@ router.get("/chapter/:slug", async (req, res) => {
   const url = `https://erisscans.com/chapter/${slug}/`;
   const { data } = await axios.get(url, {
     headers: {
-      "User-Agent": _userAgent,
-       "Accept": "text/html,application/xhtml+xml",
-        "Referer": "https://erisscans.com/",
+      headers,
     },
   });
 
