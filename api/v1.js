@@ -1,7 +1,9 @@
 import * as cheerio from "cheerio";
 import express from "express";
 import axios from "axios";
+import cloudscraper from 'cloudscraper';
 import UserAgent from 'user-agents';
+
 const userAgent = new UserAgent().toString();
 const headers = {
   'User-Agent': userAgent,
@@ -23,7 +25,7 @@ const _userAgent =
 const url = "https://erisscans.com/";
 
 router.get("/home-items", async (req, res) => {
-  const { data } = await axios.get(url,
+  const { data } = await cloudscraper.get(url,
     {headers},
   );
 
@@ -232,7 +234,7 @@ router.get("/home-items", async (req, res) => {
 router.get("/series/:slug", async (req, res) => {
   const { slug } = req.params;
   const url = `https://erisscans.com/series/${slug}/`;
-  const { data } = await axios.get(url, 
+  const { data } = await cloudscraper.get(url, 
         {headers},
   );
 
@@ -330,7 +332,7 @@ router.get("/series/:slug", async (req, res) => {
 router.get("/chapter/:slug", async (req, res) => {
   const { slug } = req.params;
   const url = `https://erisscans.com/chapter/${slug}/`;
-  const { data } = await axios.get(url, 
+  const { data } = await cloudscraper.get(url, 
         {headers},
   );
 
