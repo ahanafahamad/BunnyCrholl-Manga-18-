@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "prev": "node index.js"
+    "prev": "node index.js",
+    "web": "nodemon ./template/server/server.js"
   },
   "keywords": [],
   "author": "",
