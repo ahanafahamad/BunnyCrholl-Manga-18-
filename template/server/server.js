@@ -446,6 +446,190 @@ app.get("/chapter/:slug", async (req, res) => {
     res.status(500).send(`<h1>Error</h1><p>${error.message}</p>`);
   }
 });
+app.get("/search", async (req, res) => {
+  const query = req.query.q || "";
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search – BunnyCrholl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { background: #0a0a0a; color: #f0f0f0; font-family: 'Roboto', sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Poppins', sans-serif; }
+    .text-gradient { background: linear-gradient(135deg, #f97316, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-link { position: relative; }
+    .nav-link::after { content: ''; position: absolute; left: 0; bottom: -2px; width: 0; height: 2px; background: #f97316; transition: width 0.3s; }
+    .nav-link:hover::after { width: 100%; }
+    .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.4); }
+    .badge-status { padding: 0 10px; border-radius: 999px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; }
+    .badge-ongoing { background: #22c55e; color: #fff; }
+    .badge-completed { background: #3b82f6; color: #fff; }
+    .badge-dropped { background: #ef4444; color: #fff; }
+    .badge-hiatus { background: #f59e0b; color: #000; }
+    .badge-genre { background: rgba(249, 115, 22, 0.15); color: #f97316; padding: 2px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+  <header class="flex justify-between items-center mb-8">
+    <div class="flex items-center gap-2">
+      <a href="/" class="text-2xl font-bold text-gradient">BunnyCrholl</a>
+      <span class="text-xs bg-orange-600/20 text-orange-300 px-2 py-0.5 rounded-full">18+</span>
+    </div>
+    <nav class="hidden md:flex gap-6 text-sm font-medium">
+      <a href="/" class="nav-link text-zinc-300 hover:text-white transition">Home</a>
+      <a href="/search" class="nav-link text-orange-400 hover:text-white transition">Search</a>
+      <a href="#" class="nav-link text-zinc-300 hover:text-white transition">Genres</a>
+      <a href="#" class="nav-link text-zinc-300 hover:text-white transition">Latest</a>
+    </nav>
+    <button class="md:hidden text-white" onclick="document.querySelector('nav').classList.toggle('hidden')">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </header>
+
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold flex items-center gap-3">
+      <i data-lucide="search" class="w-8 h-8 text-orange-400"></i>
+      Search Series
+    </h1>
+    <p class="text-zinc-400 text-sm mt-1">Find your favorite manga, manhwa, and more</p>
+  </div>
+
+  <form id="searchForm" class="mb-8" onsubmit="performSearch(event)">
+    <div class="flex gap-3 max-w-2xl">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search for series..."
+        value="${query}"
+        class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition"
+      />
+      <button type="submit" class="bg-orange-600 hover:bg-orange-700 px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2">
+        <i data-lucide="search" class="w-4 h-4"></i>
+        Search
+      </button>
+    </div>
+  </form>
+
+  <div id="results">
+    <div id="loading" class="flex justify-center items-center h-40">
+      <div class="animate-pulse text-orange-400 text-lg">Loading...</div>
+    </div>
+    <div id="results-grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+    <div id="no-results" class="hidden text-center py-12">
+      <i data-lucide="search-x" class="w-12 h-12 text-zinc-600 mx-auto mb-3"></i>
+      <p class="text-zinc-400 text-lg">No series found</p>
+      <p class="text-zinc-500 text-sm">Try adjusting your search terms</p>
+    </div>
+  </div>
+
+  <footer class="border-t border-zinc-800 pt-6 mt-12 text-center text-sm text-zinc-500">
+    <p>© 2026 BunnyCrholl – All data is for demonstration purposes.</p>
+  </footer>
+</div>
+
+<script>
+  const esc = (str) => {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  };
+
+  const statusBadge = (status) => {
+    const classes = {
+      ongoing: 'badge-ongoing',
+      completed: 'badge-completed',
+      dropped: 'badge-dropped',
+      hiatus: 'badge-hiatus'
+    };
+    return \`<span class="badge-status \${classes[status] || 'badge-ongoing'}">\${status || 'ongoing'}</span>\`;
+  };
+
+  function renderResults(data) {
+    const grid = document.getElementById('results-grid');
+    const noResults = document.getElementById('no-results');
+    const loading = document.getElementById('loading');
+
+    loading.classList.add('hidden');
+
+    if (!data || data.length === 0) {
+      grid.classList.add('hidden');
+      noResults.classList.remove('hidden');
+      return;
+    }
+
+    noResults.classList.add('hidden');
+    grid.classList.remove('hidden');
+
+    grid.innerHTML = data.map(item => \`
+      <a href="\${esc(item.slug)}" class="card-hover bg-zinc-900 rounded-lg overflow-hidden shadow-lg border border-zinc-800 hover:border-orange-500 transition">
+        <div class="relative">
+          <img src="\${esc(item.poster) || 'https://ui-avatars.com/api/?format=svg&length=3&background=59585a&color=fff&name=' + encodeURIComponent(item.title)}" alt="\${esc(item.title)}" class="w-full h-48 object-cover" />
+          <div class="absolute top-2 right-2">
+            \${statusBadge(item.status)}
+          </div>
+        </div>
+        <div class="p-3">
+          <p class="text-sm font-medium truncate">\${esc(item.title)}</p>
+          <div class="flex flex-wrap gap-1 mt-2">
+            <span class="text-xs text-zinc-400">\${esc(item.type) || 'manhwa'}</span>
+            \${(item.genres || []).slice(0, 2).map(g => \`<span class="badge-genre">\${esc(g)}</span>\`).join('')}
+            \${(item.genres || []).length > 2 ? \`<span class="text-xs text-zinc-500">+\${item.genres.length - 2}</span>\` : ''}
+          </div>
+        </div>
+      </a>
+    \`).join('');
+  }
+
+  async function performSearch(e) {
+    if (e) e.preventDefault();
+    const query = document.getElementById('searchInput').value.trim();
+    const loading = document.getElementById('loading');
+    const grid = document.getElementById('results-grid');
+    const noResults = document.getElementById('no-results');
+
+    loading.classList.remove('hidden');
+    grid.classList.add('hidden');
+    noResults.classList.add('hidden');
+
+    try {
+      const url = \`/api/v1/search?q=\${encodeURIComponent(query)}\`;
+      const res = await fetch(url);
+      const json = await res.json();
+      renderResults(json.data || []);
+    } catch (err) {
+      console.error(err);
+      loading.classList.add('hidden');
+      noResults.classList.remove('hidden');
+      noResults.querySelector('p').textContent = 'Error loading results';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    const initialQuery = '${query}';
+    if (initialQuery) {
+      performSearch(null);
+    } else {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('no-results').classList.remove('hidden');
+      document.getElementById('no-results').querySelector('p').textContent = 'Start typing to search';
+    }
+  });
+</script>
+</body>
+</html>`;
+
+  res.send(html);
+});
 app.listen(9090, () => {
   console.log("Server running at http://localhost:9090");
 });

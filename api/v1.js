@@ -344,4 +344,56 @@ router.get("/res", (req, res) => {
   res.send("HSLKDUIGJRIJKKKKKKSOJKJIHHFGG");
 });
 
+app.get("/search", async (req, res) => {
+  try {
+    const query = req.query.q || "";
+    const searchUrl = `https://erisscans.com/search_series?q=${encodeURIComponent(query)}`;
+    const response = await fetch(searchUrl);
+    const html = await response.text();
+
+    const series = [];
+    const lines = html.split("\n").filter(line => line.trim());
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      const match = trimmed.match(/^(New\s+)?(manhwa|manhua|manga|comic|novel)?\s*(completed|ongoing|dropped|hiatus)?\s*(.+?)\s*(Adult|Josei|Comedy|Drama|Romance|Fantasy|Action|Ecchi|Harem|Smut|Mature|Slice of life|School life|Supernatural|Horror|Mystery|Psychological|Tragedy|Sports|Sci-fi|Isekai|Historical|Webtoon|Yuri|GL|Shoujo|Seinen|Joseiv|Adultd)(.*)$/i);
+
+      if (match) {
+        const title = match[4]?.trim() || "";
+        const genreStr = (match[5] || "").trim();
+        const genres = genreStr.split(",").map(g => g.trim()).filter(Boolean);
+
+        const slug = title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+
+        series.push({
+          title: title,
+          slug: `/series/${slug}/`,
+          type: match[2] || "manhwa",
+          status: match[3] || "ongoing",
+          genres: genres.length ? genres : ["Unknown"],
+          poster: null
+        });
+      }
+    }
+
+    const filtered = query
+      ? series.filter(s => s.title.toLowerCase().includes(query.toLowerCase()))
+      : series;
+
+    res.json({
+      response: true,
+      count: filtered.length,
+      data: filtered.slice(0, 50)
+    });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
