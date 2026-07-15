@@ -21,9 +21,9 @@ app.get("/", async (req, res) => {
 // v1 api
 app.use("/api/v1", router);
 
-// app.listen(PORT, () => {
-//   console.log(`BUNNYCRHOLL MANGA API IS RUNNING ON ${PORT}`);
-//   console.log(`LINK -- http://localhost:${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`BUNNYCRHOLL MANGA API IS RUNNING ON ${PORT}`);
+  console.log(`LINK -- http://localhost:${PORT}`);
+});
 
 export default app;

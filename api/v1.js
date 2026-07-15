@@ -23,11 +23,9 @@ const _userAgent =
 const url = "https://erisscans.com/";
 
 router.get("/home-items", async (req, res) => {
-  const { data } = await axios.get(url, {
-    headers: {
-      headers,
-    },
-  });
+  const { data } = await axios.get(url,
+    {headers},
+  );
 
   const $ = cheerio.load(data);
   function parseTags(tagsStr) {
@@ -234,11 +232,9 @@ router.get("/home-items", async (req, res) => {
 router.get("/series/:slug", async (req, res) => {
   const { slug } = req.params;
   const url = `https://erisscans.com/series/${slug}/`;
-  const { data } = await axios.get(url, {
-    headers: {
-      headers,
-    },
-  });
+  const { data } = await axios.get(url, 
+        {headers},
+  );
 
   const $ = cheerio.load(data);
 
@@ -334,11 +330,9 @@ router.get("/series/:slug", async (req, res) => {
 router.get("/chapter/:slug", async (req, res) => {
   const { slug } = req.params;
   const url = `https://erisscans.com/chapter/${slug}/`;
-  const { data } = await axios.get(url, {
-    headers: {
-      headers,
-    },
-  });
+  const { data } = await axios.get(url, 
+        {headers},
+  );
 
   const $ = cheerio.load(data);
   function extractBgImage(style) {
